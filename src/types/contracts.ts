@@ -13,6 +13,7 @@ export const photoWarningCodeSchema = z.enum([
   'unsupported-file-type',
   'low-resolution',
   'possible-duplicate',
+  'metadata-extraction-failed',
   'missing-required-cover',
   'page-count-over-target',
   'override-repaired',
@@ -227,4 +228,3 @@ export const appSessionStateSchema = z.object({
   lastPlannedAt: z.string().datetime().nullable(),
 });
 export type AppSessionState = z.infer<typeof appSessionStateSchema>;
-

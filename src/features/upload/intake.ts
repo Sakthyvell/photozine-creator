@@ -1,28 +1,40 @@
 import type {
+  Orientation,
   PhotoWarning,
-  WarningScope,
+  QuarterTurn,
+  SupportedImageFormat,
 } from '../../types';
 
 export const supportedImageMimeTypes = new Set(['image/jpeg', 'image/png']);
 export const supportedImageExtensions = new Set(['jpg', 'jpeg', 'png']);
 
-export type UploadTarget = WarningScope;
+export type UploadTarget = 'front-cover' | 'back-cover' | 'body-photo';
 
 export type IntakeAsset = {
   id: string;
   scope: UploadTarget;
   file: File;
   fileName: string;
+  format: SupportedImageFormat;
+  width: number;
+  height: number;
   fileSizeBytes: number;
+  aspectRatio: number;
+  orientation: Orientation;
+  exifOrientation: number | null;
+  previewUrl: string;
+  rotationQuarterTurns: QuarterTurn;
 };
+
+export type IntakeAssetMetadata = Omit<
+  IntakeAsset,
+  'id' | 'scope' | 'file' | 'fileName' | 'fileSizeBytes'
+>;
 
 const scopeLabels: Record<UploadTarget, string> = {
   'front-cover': 'Front cover',
   'back-cover': 'Back cover',
   'body-photo': 'Body photos',
-  planner: 'Planner',
-  export: 'Export',
-  session: 'Session',
 };
 
 function isSupportedExtension(fileName: string) {
@@ -75,6 +87,7 @@ export function partitionSupportedFiles(
 export function createIntakeAsset(
   file: File,
   scope: UploadTarget,
+  metadata: IntakeAssetMetadata,
   nextAssetId: () => string,
 ): IntakeAsset {
   return {
@@ -83,5 +96,14 @@ export function createIntakeAsset(
     file,
     fileName: file.name,
     fileSizeBytes: file.size,
+    ...metadata,
   };
+}
+
+export function revokeIntakeAssetPreview(asset: IntakeAsset | null) {
+  if (!asset || typeof URL.revokeObjectURL !== 'function') {
+    return;
+  }
+
+  URL.revokeObjectURL(asset.previewUrl);
 }

@@ -5,4 +5,6 @@ export const uploadFeature = {
 } as const;
 
 export * from './intake';
+export * from './quality';
+export * from './SourceOrganizer';
 export * from './UploadWorkspace';

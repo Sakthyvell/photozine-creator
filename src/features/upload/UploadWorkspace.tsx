@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react';
+import { useId, useState } from 'react';
 import type { ChangeEvent, DragEvent, RefObject } from 'react';
 import type { PhotoWarning } from '../../types';
 import { ActionButton, StatusBanner } from '../../components';
@@ -9,6 +9,13 @@ type UploadWorkspaceProps = {
   backCover: IntakeAsset | null;
   bodyPhotos: IntakeAsset[];
   warnings: PhotoWarning[];
+  onDismissWarning: (warningId: string) => void;
+  frontInputRef: RefObject<HTMLInputElement>;
+  backInputRef: RefObject<HTMLInputElement>;
+  bodyInputRef: RefObject<HTMLInputElement>;
+  onOpenFrontCoverPicker: () => void;
+  onOpenBackCoverPicker: () => void;
+  onOpenBodyPhotoPicker: () => void;
   onFrontCoverFiles: (files: File[]) => void;
   onBackCoverFiles: (files: File[]) => void;
   onBodyPhotoFiles: (files: File[]) => void;
@@ -50,6 +57,13 @@ export function UploadWorkspace({
   backCover,
   bodyPhotos,
   warnings,
+  onDismissWarning,
+  frontInputRef,
+  backInputRef,
+  bodyInputRef,
+  onOpenFrontCoverPicker,
+  onOpenBackCoverPicker,
+  onOpenBodyPhotoPicker,
   onFrontCoverFiles,
   onBackCoverFiles,
   onBodyPhotoFiles,
@@ -57,9 +71,6 @@ export function UploadWorkspace({
   const frontInputId = useId();
   const backInputId = useId();
   const bodyInputId = useId();
-  const frontInputRef = useRef<HTMLInputElement>(null);
-  const backInputRef = useRef<HTMLInputElement>(null);
-  const bodyInputRef = useRef<HTMLInputElement>(null);
   const [isDraggingBodyFiles, setIsDraggingBodyFiles] = useState(false);
 
   function readSelectedFiles(event: ChangeEvent<HTMLInputElement>) {
@@ -68,19 +79,13 @@ export function UploadWorkspace({
     return files;
   }
 
-  function openPicker(inputRef: RefObject<HTMLInputElement>) {
-    inputRef.current?.click();
-  }
-
   function handleDrop(event: DragEvent<HTMLElement>) {
     event.preventDefault();
     setIsDraggingBodyFiles(false);
     onBodyPhotoFiles(Array.from(event.dataTransfer.files ?? []));
   }
 
-  const frontWarnings = warnings.filter((warning) => warning.scope === 'front-cover');
-  const backWarnings = warnings.filter((warning) => warning.scope === 'back-cover');
-  const bodyWarnings = warnings.filter((warning) => warning.scope === 'body-photo');
+  const unsupportedWarnings = warnings.filter((warning) => warning.code === 'unsupported-file-type');
 
   return (
     <section className="upload-workspace" aria-labelledby="upload-workspace-title">
@@ -148,7 +153,7 @@ export function UploadWorkspace({
             <div className="upload-zone__actions">
               <ActionButton
                 className="upload-zone__button"
-                onClick={() => openPicker(frontInputRef)}
+                onClick={onOpenFrontCoverPicker}
                 tone="primary"
               >
                 Choose front cover
@@ -171,15 +176,6 @@ export function UploadWorkspace({
             <p className="upload-zone__files">
               Selected file: <strong>{frontCover.fileName}</strong>
             </p>
-          ) : null}
-          {frontWarnings.length > 0 ? (
-            <ul className="upload-warning-list" aria-live="polite">
-              {frontWarnings.map((warning) => (
-                <li className={`upload-warning ${warningTone(warning.severity)}`} key={warning.id}>
-                  {warning.message}
-                </li>
-              ))}
-            </ul>
           ) : null}
         </section>
 
@@ -204,7 +200,7 @@ export function UploadWorkspace({
             <div className="upload-zone__actions">
               <ActionButton
                 className="upload-zone__button"
-                onClick={() => openPicker(backInputRef)}
+                onClick={onOpenBackCoverPicker}
                 tone="primary"
               >
                 Choose back cover
@@ -227,15 +223,6 @@ export function UploadWorkspace({
             <p className="upload-zone__files">
               Selected file: <strong>{backCover.fileName}</strong>
             </p>
-          ) : null}
-          {backWarnings.length > 0 ? (
-            <ul className="upload-warning-list" aria-live="polite">
-              {backWarnings.map((warning) => (
-                <li className={`upload-warning ${warningTone(warning.severity)}`} key={warning.id}>
-                  {warning.message}
-                </li>
-              ))}
-            </ul>
           ) : null}
         </section>
 
@@ -272,7 +259,7 @@ export function UploadWorkspace({
             <div className="upload-zone__actions">
               <ActionButton
                 className="upload-zone__button"
-                onClick={() => openPicker(bodyInputRef)}
+                onClick={onOpenBodyPhotoPicker}
                 tone="primary"
               >
                 Choose body photos
@@ -296,25 +283,31 @@ export function UploadWorkspace({
             <strong>{bodyPhotos.length > 0 ? 'Selected files' : 'No body photos yet'}</strong>
             <p>{fileListLabel(bodyPhotos)}</p>
           </div>
-          {bodyWarnings.length > 0 ? (
-            <ul className="upload-warning-list upload-warning-list--body" aria-live="polite">
-              {bodyWarnings.map((warning) => (
-                <li className={`upload-warning ${warningTone(warning.severity)}`} key={warning.id}>
-                  {warning.message}
-                </li>
-              ))}
-            </ul>
-          ) : null}
         </section>
       </div>
 
-      {warnings.length > 0 ? (
+      {unsupportedWarnings.length > 0 ? (
         <aside className="upload-note" aria-label="Validation summary">
           <p className="upload-note__title">Validation summary</p>
           <p className="upload-note__body">
-            Unsupported files were skipped, but valid images from the same batch were
-            kept. That lets you clean up the intake without redoing the whole batch.
+            Intake warnings are advisory only. Unsupported files are skipped, and
+            the source organizer shows per-image quality warnings, previews, and
+            dismissal controls.
           </p>
+          <ul className="upload-warning-list upload-warning-list--compact">
+            {unsupportedWarnings.map((warning) => (
+              <li className={`upload-warning ${warningTone(warning.severity)}`} key={warning.id}>
+                <span>{warning.message}</span>
+                <button
+                  className="upload-warning__dismiss"
+                  onClick={() => onDismissWarning(warning.id)}
+                  type="button"
+                >
+                  Dismiss
+                </button>
+              </li>
+            ))}
+          </ul>
         </aside>
       ) : null}
     </section>
