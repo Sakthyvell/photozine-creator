@@ -4,7 +4,6 @@ export type PlannerPhoto = {
   id: string;
   fileName: string;
   orientation: 'portrait' | 'landscape' | 'square';
-  aspectRatio: number;
   rotationQuarterTurns: QuarterTurn;
   sourceOrder?: number;
   included?: boolean;
@@ -12,24 +11,14 @@ export type PlannerPhoto = {
 
 type FrameTemplate = Omit<PageFrame, 'id' | 'pageId' | 'assetId' | 'rotationQuarterTurns'>;
 
-export type PlannerLayoutConfig = {
-  id: BodyLayoutId;
-  frameCount: number;
-  spansTwoPages: boolean;
-  frameTemplates: FrameTemplate[];
-};
-
 export type MinimalPlannerResult = {
   pages: ZinePage[];
   layoutCounts: Record<BodyLayoutId, number>;
   photoCount: number;
 };
 
-export const plannerLayoutConfigs: Record<BodyLayoutId, PlannerLayoutConfig> = {
+const plannerLayoutConfigs: Record<BodyLayoutId, { frameTemplates: FrameTemplate[] }> = {
   'single-portrait': {
-    id: 'single-portrait',
-    frameCount: 1,
-    spansTwoPages: false,
     frameTemplates: [
       {
         slotIndex: 0,
@@ -42,9 +31,6 @@ export const plannerLayoutConfigs: Record<BodyLayoutId, PlannerLayoutConfig> = {
     ],
   },
   'two-portraits': {
-    id: 'two-portraits',
-    frameCount: 2,
-    spansTwoPages: false,
     frameTemplates: [
       {
         slotIndex: 0,
@@ -65,9 +51,6 @@ export const plannerLayoutConfigs: Record<BodyLayoutId, PlannerLayoutConfig> = {
     ],
   },
   'two-landscapes': {
-    id: 'two-landscapes',
-    frameCount: 2,
-    spansTwoPages: false,
     frameTemplates: [
       {
         slotIndex: 0,
@@ -88,9 +71,6 @@ export const plannerLayoutConfigs: Record<BodyLayoutId, PlannerLayoutConfig> = {
     ],
   },
   'landscape-spread': {
-    id: 'landscape-spread',
-    frameCount: 1,
-    spansTwoPages: true,
     frameTemplates: [
       {
         slotIndex: 0,

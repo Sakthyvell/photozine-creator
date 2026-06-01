@@ -9,7 +9,6 @@ function makePhoto(overrides: Partial<PlannerPhoto> = {}): PlannerPhoto {
     id: overrides.id ?? `body-${sourceOrder + 1}`,
     fileName: overrides.fileName ?? `photo-${sourceOrder + 1}.jpg`,
     orientation: overrides.orientation ?? 'portrait',
-    aspectRatio: overrides.aspectRatio ?? 0.75,
     rotationQuarterTurns: overrides.rotationQuarterTurns ?? 0,
     sourceOrder,
     included: overrides.included ?? true,

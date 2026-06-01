@@ -30,12 +30,6 @@ export type ExtractedImageMetadata = NormalizedImageMetrics & {
   previewUrl: string;
 };
 
-export function isSupportedImageMimeType(
-  value: string,
-): value is (typeof supportedImageMimeTypes)[number] {
-  return supportedImageMimeTypes.includes(value as (typeof supportedImageMimeTypes)[number]);
-}
-
 export function classifyAspectOrientation(aspectRatio: number): Orientation {
   if (aspectRatio > 1 + squareAspectTolerance) {
     return 'landscape';
@@ -76,7 +70,7 @@ export function normalizeImageMetrics(
   };
 }
 
-export function revokeObjectUrl(previewUrl: string) {
+function revokeObjectUrl(previewUrl: string) {
   URL.revokeObjectURL(previewUrl);
 }
 
