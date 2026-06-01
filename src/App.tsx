@@ -3,8 +3,11 @@ import './styles.css';
 import { ActionButton, SectionCard, StatusBanner, StepIndicator } from './components';
 import {
   BookletSheetPreview,
+  buildExportFileName,
   createMinimalPlan,
+  downloadPdfBytes,
   exportFeature,
+  generateBookletPdfBytes,
   plannerFeature,
   ReadingOrderPreview,
   buildReadingOrderPreview,
@@ -78,6 +81,11 @@ export function App() {
   const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
   const [failedUploads, setFailedUploads] = useState<FailedUpload[]>([]);
   const [planningMode, setPlanningMode] = useState<PlanningMode>(getInitialPlanningMode);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportStatusMessage, setExportStatusMessage] = useState<string | null>(null);
+  const [exportStatusTone, setExportStatusTone] = useState<'success' | 'warning' | 'neutral'>(
+    'neutral',
+  );
   const assetSequence = useRef(1);
   const warningSequence = useRef(1);
   const pendingSequence = useRef(1);
@@ -377,8 +385,6 @@ export function App() {
     }
   }
 
-  const exportReady = Boolean(frontCover);
-  const warningCount = warnings.length;
   const plannerResult = createMinimalPlan(bodyPhotos, planningMode);
   const plannerHasPhotos = plannerResult.photoCount > 0;
   const plannerEstimatedTotalPages = plannerResult.pages.length + 2;
@@ -392,6 +398,41 @@ export function App() {
   const bookletImposition = previewReady
     ? imposeBookletPages(readingOrderPreview.pages)
     : null;
+  const exportReady = Boolean(frontCover) && Boolean(bookletImposition);
+  const warningCount = warnings.length;
+
+  async function handleExportPdf() {
+    if (!bookletImposition) {
+      setExportStatusTone('warning');
+      setExportStatusMessage(
+        'Upload a front cover and at least one body photo before exporting the booklet PDF.',
+      );
+      return;
+    }
+
+    setIsExporting(true);
+    setExportStatusTone('neutral');
+    setExportStatusMessage('Preparing the imposed A4 PDF.');
+
+    try {
+      const pdfBytes = await generateBookletPdfBytes(
+        bookletImposition.sheets,
+        readingOrderPreview.assetMap,
+      );
+      downloadPdfBytes(pdfBytes, buildExportFileName());
+      setExportStatusTone('success');
+      setExportStatusMessage(
+        `Exported ${pdfBytes.length.toLocaleString()} bytes across ${bookletImposition.totalSheets * 2} PDF pages.`,
+      );
+    } catch {
+      setExportStatusTone('warning');
+      setExportStatusMessage(
+        'The PDF export failed. Try again after checking the uploaded files.',
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  }
 
   return (
     <div className="app-background">
@@ -623,7 +664,15 @@ export function App() {
             eyebrow={exportFeature.title}
             title="Export a print-ready PDF"
             description={exportFeature.description}
-            footer={<ActionButton tone="primary" disabled={!exportReady}>Export PDF</ActionButton>}
+            footer={
+              <ActionButton
+                tone="primary"
+                disabled={!exportReady || isExporting}
+                onClick={handleExportPdf}
+              >
+                {isExporting ? 'Exporting PDF...' : 'Export PDF'}
+              </ActionButton>
+            }
           >
             <div className="card-metrics">
               <div>
@@ -638,7 +687,25 @@ export function App() {
                   {backCover ? backCover.fileName : 'Blank white'}
                 </strong>
               </div>
+              <div>
+                <span className="card-metrics__label">A4 sheets</span>
+                <strong className="card-metrics__value">{bookletImposition?.totalSheets ?? 0}</strong>
+              </div>
+              <div>
+                <span className="card-metrics__label">PDF pages</span>
+                <strong className="card-metrics__value">
+                  {bookletImposition ? bookletImposition.totalSheets * 2 : 0}
+                </strong>
+              </div>
             </div>
+            <p className="section-note">
+              Export produces landscape A4 PDF pages in duplex booklet order with no cropping.
+            </p>
+            {exportStatusMessage ? (
+              <p className={`export-status export-status--${exportStatusTone}`}>
+                {exportStatusMessage}
+              </p>
+            ) : null}
           </SectionCard>
         </section>
       </main>

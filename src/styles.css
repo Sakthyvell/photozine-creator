@@ -460,6 +460,31 @@ h1 {
   color: var(--muted);
 }
 
+.export-status {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+}
+
+.export-status--neutral {
+  background: rgba(31, 75, 153, 0.08);
+  border-color: rgba(31, 75, 153, 0.16);
+  color: var(--accent-strong);
+}
+
+.export-status--success {
+  background: rgba(31, 111, 67, 0.08);
+  border-color: rgba(31, 111, 67, 0.16);
+  color: #1f6f43;
+}
+
+.export-status--warning {
+  background: rgba(173, 90, 19, 0.08);
+  border-color: rgba(173, 90, 19, 0.18);
+  color: #8a4a10;
+}
+
 .action-button {
   appearance: none;
   border: 1px solid transparent;

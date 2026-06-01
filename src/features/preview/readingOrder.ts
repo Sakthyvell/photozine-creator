@@ -4,7 +4,7 @@ import { getBlankPageCount } from '../../lib/booklet';
 
 export type PreviewAsset = Pick<
   IntakeAsset,
-  'id' | 'fileName' | 'previewUrl' | 'rotationQuarterTurns'
+  'id' | 'file' | 'fileName' | 'format' | 'previewUrl' | 'rotationQuarterTurns'
 >;
 
 export type ReadingOrderPreviewResult = {
@@ -44,7 +44,9 @@ function buildPreviewAssetMap(
       asset.id,
       {
         id: asset.id,
+        file: asset.file,
         fileName: asset.fileName,
+        format: asset.format,
         previewUrl: asset.previewUrl,
         rotationQuarterTurns: asset.rotationQuarterTurns,
       },
