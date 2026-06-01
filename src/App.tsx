@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import './styles.css';
 import { ActionButton, SectionCard, StatusBanner, StepIndicator } from './components';
 import {
+  BookletSheetPreview,
   createMinimalPlan,
   exportFeature,
   plannerFeature,
@@ -19,6 +20,7 @@ import {
   type IntakeAsset,
   type PendingUpload,
 } from './features/upload';
+import { imposeBookletPages } from './lib/booklet';
 import { extractImageMetadata } from './lib/image';
 import type { PlanningMode, PhotoWarning } from './types';
 import { SourceOrganizer, UploadWorkspace } from './features/upload';
@@ -387,6 +389,9 @@ export function App() {
     plannedBodyPages: plannerResult.pages,
   });
   const previewReady = Boolean(frontCover) && plannerHasPhotos;
+  const bookletImposition = previewReady
+    ? imposeBookletPages(readingOrderPreview.pages)
+    : null;
 
   return (
     <div className="app-background">
@@ -580,6 +585,10 @@ export function App() {
                     <span className="card-metrics__label">Auto blank pages</span>
                     <strong className="card-metrics__value">{readingOrderPreview.blankPageCount}</strong>
                   </div>
+                  <div>
+                    <span className="card-metrics__label">A4 sheets</span>
+                    <strong className="card-metrics__value">{bookletImposition?.totalSheets ?? 0}</strong>
+                  </div>
                 </div>
 
                 <p className="section-note">
@@ -590,6 +599,13 @@ export function App() {
                   assetMap={readingOrderPreview.assetMap}
                   pages={readingOrderPreview.pages}
                 />
+
+                <div className="preview-divider">
+                  <p className="section-note">
+                    Print-sheet order maps those A5 reading pages into duplex A4 booklet sheets.
+                  </p>
+                  {bookletImposition ? <BookletSheetPreview sheets={bookletImposition.sheets} /> : null}
+                </div>
               </>
             ) : (
               <>

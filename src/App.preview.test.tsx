@@ -59,5 +59,7 @@ describe('App preview flow', () => {
     expect(within(previewSection as HTMLElement).getByText('4')).toBeInTheDocument();
     expect(within(previewSection as HTMLElement).getAllByText('Blank page').length).toBeGreaterThan(0);
     expect(within(previewSection as HTMLElement).getAllByText('Back cover').length).toBeGreaterThan(0);
+    expect(within(previewSection as HTMLElement).getByText('Sheet 1')).toBeInTheDocument();
+    expect(within(previewSection as HTMLElement).getByText('Front side')).toBeInTheDocument();
   });
 });
