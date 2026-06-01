@@ -56,7 +56,9 @@ describe('App preview flow', () => {
       .then((heading) => heading.closest('article'));
 
     expect(previewSection).not.toBeNull();
-    expect(within(previewSection as HTMLElement).getByText('4')).toBeInTheDocument();
+    expect(
+      within(previewSection as HTMLElement).getByText(/4 reading-order pages with 1 auto blank/i),
+    ).toBeInTheDocument();
     expect(within(previewSection as HTMLElement).getAllByText('Blank page').length).toBeGreaterThan(0);
     expect(within(previewSection as HTMLElement).getAllByText('Back cover').length).toBeGreaterThan(0);
     expect(within(previewSection as HTMLElement).getByText('Sheet 1')).toBeInTheDocument();

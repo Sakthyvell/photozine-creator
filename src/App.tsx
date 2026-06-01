@@ -53,10 +53,6 @@ const steps = [
   { key: exportFeature.key, label: exportFeature.title, state: 'upcoming' as const },
 ];
 
-function statValueLabel(isSelected: boolean, fallback: string) {
-  return isSelected ? 'Selected' : fallback;
-}
-
 function plannerLayoutLabel(layoutId: string) {
   if (layoutId === 'single-portrait') {
     return 'Single image';
@@ -400,6 +396,10 @@ export function App() {
     : null;
   const exportReady = Boolean(frontCover) && Boolean(bookletImposition);
   const warningCount = warnings.length;
+  const visibleReadingPages = readingOrderPreview.pages.slice(0, 4);
+  const hiddenReadingPageCount = Math.max(0, readingOrderPreview.pages.length - visibleReadingPages.length);
+  const visibleSheets = bookletImposition?.sheets.slice(0, 2) ?? [];
+  const hiddenSheetCount = Math.max(0, (bookletImposition?.sheets.length ?? 0) - visibleSheets.length);
 
   async function handleExportPdf() {
     if (!bookletImposition) {
@@ -447,29 +447,6 @@ export function App() {
               first so the rest of the pipeline starts from clean, trusted files.
             </p>
           </div>
-
-          <aside className="hero__stats" aria-label="Project snapshot">
-            <div className="stat-card">
-              <span className="stat-card__label">Front cover</span>
-              <strong className="stat-card__value">
-                {statValueLabel(Boolean(frontCover), 'Missing')}
-              </strong>
-            </div>
-            <div className="stat-card">
-              <span className="stat-card__label">Back cover</span>
-              <strong className="stat-card__value">
-                {statValueLabel(Boolean(backCover), 'Blank white')}
-              </strong>
-            </div>
-            <div className="stat-card">
-              <span className="stat-card__label">Body photos</span>
-              <strong className="stat-card__value">{bodyPhotos.length}</strong>
-            </div>
-            <div className="stat-card">
-              <span className="stat-card__label">Warnings</span>
-              <strong className="stat-card__value">{warningCount}</strong>
-            </div>
-          </aside>
         </header>
 
         <StatusBanner
@@ -550,32 +527,18 @@ export function App() {
           >
             {plannerHasPhotos ? (
               <>
-                <div className="card-metrics">
-                  <div>
-                    <span className="card-metrics__label">Included body photos</span>
-                    <strong className="card-metrics__value">{plannerResult.photoCount}</strong>
-                  </div>
-                  <div>
-                    <span className="card-metrics__label">Suggested body pages</span>
-                    <strong className="card-metrics__value">{plannerResult.pages.length}</strong>
-                  </div>
-                  <div>
-                    <span className="card-metrics__label">Estimated total pages</span>
-                    <strong className="card-metrics__value">{plannerEstimatedTotalPages}</strong>
-                  </div>
-                  <div>
-                    <span className="card-metrics__label">Current mode</span>
-                    <strong className="card-metrics__value">
-                      {planningModeLabel(planningMode)}
-                    </strong>
-                  </div>
-                </div>
+                <p className="section-note">
+                  {plannerResult.photoCount} body photo{plannerResult.photoCount === 1 ? '' : 's'} become{' '}
+                  {plannerResult.pages.length} planned page{plannerResult.pages.length === 1 ? '' : 's'}.
+                  Estimated total with covers: {plannerEstimatedTotalPages}.
+                </p>
 
                 <div className="planner-summary">
                   <p className="section-note">
-                    Suggested layouts: {plannerResult.layoutCounts['single-portrait']} single-image,{' '}
-                    {plannerResult.layoutCounts['two-portraits']} two-portrait,{' '}
-                    {plannerResult.layoutCounts['two-landscapes']} two-landscape.
+                    Mode: <strong>{planningModeLabel(planningMode)}</strong>. Layout mix:{' '}
+                    {plannerResult.layoutCounts['single-portrait']} single,{' '}
+                    {plannerResult.layoutCounts['two-portraits']} paired portrait,{' '}
+                    {plannerResult.layoutCounts['two-landscapes']} paired landscape.
                   </p>
 
                   <ol className="planner-page-list">
@@ -617,35 +580,35 @@ export function App() {
           >
             {previewReady ? (
               <>
-                <div className="card-metrics">
-                  <div>
-                    <span className="card-metrics__label">Reading-order pages</span>
-                    <strong className="card-metrics__value">{readingOrderPreview.totalPages}</strong>
-                  </div>
-                  <div>
-                    <span className="card-metrics__label">Auto blank pages</span>
-                    <strong className="card-metrics__value">{readingOrderPreview.blankPageCount}</strong>
-                  </div>
-                  <div>
-                    <span className="card-metrics__label">A4 sheets</span>
-                    <strong className="card-metrics__value">{bookletImposition?.totalSheets ?? 0}</strong>
-                  </div>
-                </div>
-
                 <p className="section-note">
-                  Covers and auto-padding blanks are now included in reading order so the next export step can build on booklet-safe pages.
+                  {readingOrderPreview.totalPages} reading-order pages with{' '}
+                  {readingOrderPreview.blankPageCount} auto blank
+                  {readingOrderPreview.blankPageCount === 1 ? '' : 's'}.
+                  {bookletImposition ? ` That becomes ${bookletImposition.totalSheets} A4 sheet${bookletImposition.totalSheets === 1 ? '' : 's'}.` : ''}
                 </p>
 
                 <ReadingOrderPreview
                   assetMap={readingOrderPreview.assetMap}
-                  pages={readingOrderPreview.pages}
+                  pages={visibleReadingPages}
                 />
+                {hiddenReadingPageCount > 0 ? (
+                  <p className="section-note">
+                    Showing the first {visibleReadingPages.length} pages. {hiddenReadingPageCount} more page
+                    {hiddenReadingPageCount === 1 ? '' : 's'} continue in the same order.
+                  </p>
+                ) : null}
 
                 <div className="preview-divider">
                   <p className="section-note">
-                    Print-sheet order maps those A5 reading pages into duplex A4 booklet sheets.
+                    Print order preview:
                   </p>
-                  {bookletImposition ? <BookletSheetPreview sheets={bookletImposition.sheets} /> : null}
+                  {bookletImposition ? <BookletSheetPreview sheets={visibleSheets} /> : null}
+                  {hiddenSheetCount > 0 ? (
+                    <p className="section-note">
+                      Showing the first {visibleSheets.length} sheet{visibleSheets.length === 1 ? '' : 's'}. {hiddenSheetCount} more sheet
+                      {hiddenSheetCount === 1 ? '' : 's'} follow the same booklet pattern.
+                    </p>
+                  ) : null}
                 </div>
               </>
             ) : (
@@ -674,32 +637,12 @@ export function App() {
               </ActionButton>
             }
           >
-            <div className="card-metrics">
-              <div>
-                <span className="card-metrics__label">Front cover</span>
-                <strong className="card-metrics__value">
-                  {frontCover ? frontCover.fileName : 'Required'}
-                </strong>
-              </div>
-              <div>
-                <span className="card-metrics__label">Back cover</span>
-                <strong className="card-metrics__value">
-                  {backCover ? backCover.fileName : 'Blank white'}
-                </strong>
-              </div>
-              <div>
-                <span className="card-metrics__label">A4 sheets</span>
-                <strong className="card-metrics__value">{bookletImposition?.totalSheets ?? 0}</strong>
-              </div>
-              <div>
-                <span className="card-metrics__label">PDF pages</span>
-                <strong className="card-metrics__value">
-                  {bookletImposition ? bookletImposition.totalSheets * 2 : 0}
-                </strong>
-              </div>
-            </div>
             <p className="section-note">
-              Export produces landscape A4 PDF pages in duplex booklet order with no cropping.
+              {frontCover
+                ? `Ready to export ${bookletImposition ? `${bookletImposition.totalSheets * 2} landscape A4 PDF page${bookletImposition.totalSheets * 2 === 1 ? '' : 's'}` : 'the booklet PDF'}.`
+                : 'Upload a front cover before export.'}
+              {' '}
+              Back cover: {backCover ? backCover.fileName : 'blank white'}.
             </p>
             {exportStatusMessage ? (
               <p className={`export-status export-status--${exportStatusTone}`}>
