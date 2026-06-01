@@ -4,3 +4,5 @@ export const previewFeature = {
   description: 'Review reading-order pages and print-sheet imposition.',
 } as const;
 
+export * from './readingOrder';
+export * from './ReadingOrderPreview';

@@ -5,6 +5,8 @@ import {
   createMinimalPlan,
   exportFeature,
   plannerFeature,
+  ReadingOrderPreview,
+  buildReadingOrderPreview,
   previewFeature,
   uploadFeature,
 } from './features';
@@ -378,6 +380,13 @@ export function App() {
   const plannerResult = createMinimalPlan(bodyPhotos, planningMode);
   const plannerHasPhotos = plannerResult.photoCount > 0;
   const plannerEstimatedTotalPages = plannerResult.pages.length + 2;
+  const readingOrderPreview = buildReadingOrderPreview({
+    frontCover,
+    backCover,
+    bodyPhotos,
+    plannedBodyPages: plannerResult.pages,
+  });
+  const previewReady = Boolean(frontCover) && plannerHasPhotos;
 
   return (
     <div className="app-background">
@@ -557,14 +566,41 @@ export function App() {
 
           <SectionCard
             eyebrow={previewFeature.title}
-            title="Review the reading order"
+            title="Preview the reading order"
             description={previewFeature.description}
-            footer={<ActionButton tone="primary">Open preview</ActionButton>}
           >
-            <p className="section-note">
-              The preview will show both the page sequence and the final print-sheet
-              imposition view.
-            </p>
+            {previewReady ? (
+              <>
+                <div className="card-metrics">
+                  <div>
+                    <span className="card-metrics__label">Reading-order pages</span>
+                    <strong className="card-metrics__value">{readingOrderPreview.totalPages}</strong>
+                  </div>
+                  <div>
+                    <span className="card-metrics__label">Auto blank pages</span>
+                    <strong className="card-metrics__value">{readingOrderPreview.blankPageCount}</strong>
+                  </div>
+                </div>
+
+                <p className="section-note">
+                  Covers and auto-padding blanks are now included in reading order so the next export step can build on booklet-safe pages.
+                </p>
+
+                <ReadingOrderPreview
+                  assetMap={readingOrderPreview.assetMap}
+                  pages={readingOrderPreview.pages}
+                />
+              </>
+            ) : (
+              <>
+                <p className="section-note">
+                  Upload a front cover and at least one body photo to generate the first reading-order preview.
+                </p>
+                <p className="section-note">
+                  The preview will include the front cover, body pages, any required auto-padding blanks, and the back cover.
+                </p>
+              </>
+            )}
           </SectionCard>
 
           <SectionCard
