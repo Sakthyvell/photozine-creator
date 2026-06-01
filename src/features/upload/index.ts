@@ -4,3 +4,5 @@ export const uploadFeature = {
   description: 'Collect front cover, back cover, and body photos.',
 } as const;
 
+export * from './intake';
+export * from './UploadWorkspace';
